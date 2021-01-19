@@ -70,7 +70,7 @@ func (resp *Response) writeResponse(code int, v interface{}) error {
 		switch v.(type) {
 		case string:
 			resp = resp.DeleteHeader(HeaderContentType)
-			resp = resp.AddHeader(HeaderContentType, "text/plain")
+			resp = resp.AddHeader(HeaderContentType, "text/plain; charset=utf-8")
 			resp.Writer.Write([]byte(v.(string)))
 		default:
 			body, err := json.Marshal(v)
