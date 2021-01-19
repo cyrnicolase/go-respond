@@ -5,6 +5,11 @@ import (
 	"net/http"
 )
 
+const (
+	// HeaderContentType ...
+	HeaderContentType = `Content-Type`
+)
+
 // Response is the HTTP response
 type Response struct {
 	Writer     http.ResponseWriter
@@ -23,11 +28,12 @@ func NewResponse(w http.ResponseWriter) *Response {
 	return &Response{
 		Writer: w,
 		Headers: map[string]string{
-			"Content-Type": "application/json; charset=utf-8",
+			HeaderContentType: "application/json; charset=utf-8",
 		},
 	}
 }
 
+// DefaultMessage ...
 func (resp *Response) DefaultMessage() *Response {
 	resp.DefMessage = true
 	return resp
@@ -61,13 +67,20 @@ func (resp *Response) writeResponse(code int, v interface{}) error {
 	}
 
 	if v != nil {
-		body, err := json.Marshal(v)
-		if err != nil {
-			panic(err)
-		}
-		// can just return an error when connection is hijacked or content-size is longer then declared.
-		if _, err := resp.Writer.Write(body); err != nil {
-			panic(err)
+		switch v.(type) {
+		case string:
+			resp = resp.DeleteHeader(HeaderContentType)
+			resp = resp.AddHeader(HeaderContentType, "text/plain")
+			resp.Writer.Write([]byte(v.(string)))
+		default:
+			body, err := json.Marshal(v)
+			if err != nil {
+				panic(err)
+			}
+			// can just return an error when connection is hijacked or content-size is longer then declared.
+			if _, err := resp.Writer.Write(body); err != nil {
+				panic(err)
+			}
 		}
 	}
 
